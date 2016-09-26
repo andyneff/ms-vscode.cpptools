@@ -2,7 +2,7 @@
 var child_process = require('child_process');
 var path = require('path');
 var os = require('os');
-var util = require('../common');
+var util = require('../../common');
 var debugProtocol_1 = require('./debugProtocol');
 function proxy() {
     util.setExtensionPath(path.resolve(__dirname, "../../../.."));

@@ -2,8 +2,7 @@
 var path = require('path');
 var fs = require("fs");
 var vscode = require('vscode');
-var defaultSettings = "{\n    \"configurations\": [\n        {\n            \"name\": \"Mac\",\n            \"includePath\": [],\n            \"browse\" : {\n                \"limitSymbolsToIncludedHeaders\" : true,\n                \"databaseFilename\" : \"\"\n            }\n        },\n        {\n            \"name\": \"Linux\",\n            \"includePath\": [],\n            \"browse\" : {\n                \"limitSymbolsToIncludedHeaders\" : true,\n                \"databaseFilename\" : \"\"\n            }\n        },\n        {\n            \"name\": \"Win32\",\n            \"includePath\": [],\n            \"browse\" : {\n                \"limitSymbolsToIncludedHeaders\" : true,\n                \"databaseFilename\" : \"\"\n            }\n        }\n    ]\n}\n";
-var defaultSettingsExample = "{\n    \"configurations\": [\n        {\n            \"name\": \"Mac\",\n            \"includePath\": [\"/usr/include\"],\n            \"browse\" : {\n                \"limitSymbolsToIncludedHeaders\" : true,\n                \"databaseFilename\" : \"\"\n            }\n        },\n        {\n            \"name\": \"Linux\",\n            \"includePath\": [\"/usr/include\"],\n            \"browse\" : {\n                \"limitSymbolsToIncludedHeaders\" : true,\n                \"databaseFilename\" : \"\"\n            }\n        },\n        {\n            \"name\": \"Win32\",\n            \"includePath\": [\"c:/Program Files (x86)/Microsoft Visual Studio 14.0/VC/include\"],\n            \"browse\" : {\n                \"limitSymbolsToIncludedHeaders\" : true,\n                \"databaseFilename\" : \"\"\n            }\n        }\n    ]\n}\n";
+var defaultSettings = "{\n    \"configurations\": [\n        {\n            \"name\": \"Mac\",\n            \"includePath\": [\"/usr/include\"],\n            \"browse\" : {\n                \"limitSymbolsToIncludedHeaders\" : true,\n                \"databaseFilename\" : \"\"\n            }\n        },\n        {\n            \"name\": \"Linux\",\n            \"includePath\": [\"/usr/include\"],\n            \"browse\" : {\n                \"limitSymbolsToIncludedHeaders\" : true,\n                \"databaseFilename\" : \"\"\n            }\n        },\n        {\n            \"name\": \"Win32\",\n            \"includePath\": [\"c:/Program Files (x86)/Microsoft Visual Studio 14.0/VC/include\"],\n            \"browse\" : {\n                \"limitSymbolsToIncludedHeaders\" : true,\n                \"databaseFilename\" : \"\"\n            }\n        }\n    ]\n}\n";
 var ReportStatus_type = {
     get method() { return 'C_Cpp/ReportStatus'; }
 };
@@ -16,28 +15,41 @@ var ChangeSelectedSetting_type = {
 var SwitchHeaderSource_type = {
     get method() { return 'C_Cpp/didSwitchHeaderSource'; }
 };
+var FileCreated_type = {
+    get method() { return 'C_Cpp/fileCreated'; }
+};
+var FileDeleted_type = {
+    get method() { return 'C_Cpp/fileDeleted'; }
+};
 var ConfigurationProperties = (function () {
     function ConfigurationProperties(context, client) {
         var _this = this;
+        this.languageClient = client;
+        this.registeredCommands = [];
+        this.registeredCommands.push(vscode.commands.registerCommand('C_Cpp.SwitchHeaderSource', function () {
+            _this.handleSwitchHeaderSource();
+        }));
         if (!vscode.workspace.rootPath) {
+            this.registeredCommands.push(vscode.commands.registerCommand('C_Cpp.ConfigurationSelect', function () {
+                vscode.window.showInformationMessage('Open a folder first to select a configuration');
+            }));
+            this.registeredCommands.push(vscode.commands.registerCommand('C_Cpp.ConfigurationEdit', function () {
+                vscode.window.showInformationMessage('Open a folder first to edit configurations');
+            }));
             return;
         }
         this.parseStatus = "";
         this.configurationFileName = "**/c_cpp_properties.json";
         var configFilePath = path.join(vscode.workspace.rootPath, ".vscode", "c_cpp_properties.json");
         this.quickPickOptions = {};
-        this.languageClient = client;
         this.currentConfigurationIndex = 0;
         this.statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right);
-        this.registeredCommand = vscode.commands.registerCommand('C_Cpp.ConfigurationSelect', function () {
+        this.registeredCommands.push(vscode.commands.registerCommand('C_Cpp.ConfigurationSelect', function () {
             _this.handleConfigurationSelect();
-        });
-        this.registeredCommand = vscode.commands.registerCommand('C_Cpp.ConfigurationEdit', function () {
+        }));
+        this.registeredCommands.push(vscode.commands.registerCommand('C_Cpp.ConfigurationEdit', function () {
             _this.handleConfigurationEdit();
-        });
-        this.registeredCommand = vscode.commands.registerCommand('C_Cpp.SwitchHeaderSource', function () {
-            _this.handleSwitchHeaderSource();
-        });
+        }));
         if (fs.existsSync(configFilePath)) {
             this.propertiesFile = vscode.Uri.file(configFilePath);
             this.configurationJson = JSON.parse(fs.readFileSync(this.propertiesFile.fsPath, 'utf8'));
@@ -59,6 +71,13 @@ var ConfigurationProperties = (function () {
         });
         this.configFileWatcher.onDidChange(function () {
             _this.handleConfigurationChange();
+        });
+        this.rootPathFileWatcher = vscode.workspace.createFileSystemWatcher(path.join(vscode.workspace.rootPath, "*"), false, true, false);
+        this.rootPathFileWatcher.onDidCreate(function (uri) {
+            _this.languageClient.sendNotification(FileCreated_type, { uri: uri.toString() });
+        });
+        this.rootPathFileWatcher.onDidDelete(function (uri) {
+            _this.languageClient.sendNotification(FileDeleted_type, { uri: uri.toString() });
         });
         vscode.window.onDidChangeActiveTextEditor(function (e) {
             _this.UpdateStatusBar();
@@ -95,6 +114,9 @@ var ConfigurationProperties = (function () {
         this.statusBarItem.show();
     };
     ConfigurationProperties.prototype.getConfigIndexForPlatform = function (config) {
+        this.currentConfigurationIndex = this.configurationJson.configurations.length - 1;
+        if (this.configurationJson.configurations.length > 3)
+            return;
         var plat = process.platform;
         if (plat == 'linux') {
             plat = "Linux";
@@ -111,7 +133,6 @@ var ConfigurationProperties = (function () {
                 return;
             }
         }
-        this.currentConfigurationIndex = 0;
     };
     ConfigurationProperties.prototype.resolveVariables = function (input) {
         var regexp = /\$\{(.*?)\}/g;
@@ -145,6 +166,8 @@ var ConfigurationProperties = (function () {
         });
     };
     ConfigurationProperties.prototype.updateServerOnSwitchHeaderSourceChange = function (rootPath_, fileName_) {
+        if (rootPath_ == undefined)
+            rootPath_ = path.dirname(fileName_);
         this.languageClient.sendRequest(SwitchHeaderSource_type, { rootPath: rootPath_, switchHeaderSourceFileName: fileName_, }).then(function (targetFileName) {
             vscode.workspace.openTextDocument(targetFileName).then(function (document) {
                 vscode.window.showTextDocument(document);
@@ -175,12 +198,18 @@ var ConfigurationProperties = (function () {
             var dirPath_1 = path.join(vscode.workspace.rootPath, ".vscode");
             fs.mkdir(dirPath_1, function (e) {
                 if (!e || e.code === 'EEXIST') {
-                    var filePath = vscode.Uri.parse("untitled:" + path.join(dirPath_1, "c_cpp_properties.json"));
-                    vscode.workspace.openTextDocument(filePath).then(function (document) {
+                    var fullPathToFile_1 = path.join(dirPath_1, "c_cpp_properties.json");
+                    var filePath_1 = vscode.Uri.parse("untitled:" + fullPathToFile_1);
+                    vscode.workspace.openTextDocument(filePath_1).then(function (document) {
                         var edit = new vscode.WorkspaceEdit;
-                        edit.insert(document.uri, new vscode.Position(0, 0), defaultSettingsExample);
+                        edit.insert(document.uri, new vscode.Position(0, 0), defaultSettings);
                         vscode.workspace.applyEdit(edit).then(function (status) {
-                            vscode.window.showTextDocument(document);
+                            document.save().then(function () {
+                                filePath_1 = vscode.Uri.file(fullPathToFile_1);
+                                vscode.workspace.openTextDocument(filePath_1).then(function (document) {
+                                    vscode.window.showTextDocument(document);
+                                });
+                            });
                         });
                     });
                 }
@@ -217,8 +246,11 @@ var ConfigurationProperties = (function () {
     };
     ConfigurationProperties.prototype.dispose = function () {
         this.configFileWatcher.dispose();
+        this.rootPathFileWatcher.dispose();
         this.statusBarItem.dispose();
-        this.registeredCommand.dispose();
+        for (var i = 0; i < this.registeredCommands.length; i++) {
+            this.registeredCommands[i].dispose();
+        }
     };
     return ConfigurationProperties;
 }());

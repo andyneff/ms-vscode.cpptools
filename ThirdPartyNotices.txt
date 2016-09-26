@@ -2,7 +2,6 @@
 THIRD-PARTY SOFTWARE NOTICES AND INFORMATION
 Do Not Translate or Localize
 
-
 Microsoft C/C++ Extension for Visual Studio Code incorporates components from the projects listed below. Microsoft licenses these components under the Microsoft C/C++ Extension for Visual Studio Code license terms, except as noted. The original copyright notices and the licenses under which Microsoft received such components are set forth below for informational purposes. Microsoft reserves all rights not expressly granted herein, whether by implication, estoppel or otherwise. 
 
 1.	agent-base  (https://github.com/TooTallNate/node-agent-base)
@@ -14,21 +13,22 @@ Microsoft C/C++ Extension for Visual Studio Code incorporates components from th
 7.	Guidelines Support Library (https://github.com/Microsoft/GSL)
 8.	http-proxy-agent  (https://github.com/TooTallNate/node-http-proxy-agent)
 9.	https-proxy-agent  (https://github.com/TooTallNate/node-https-proxy-agent)
-10.	LLDB  (http://lldb.llvm.org/)
-11.	LLVM (http://llvm.org/)
-12.	MI Debug Engine (https://github.com/Microsoft/MIEngine)
-13.	minimist  (https://github.com/substack/minimist)
-14.	mkdirp  (https://github.com/substack/node-mkdirp)
-15.	Mono  (https://github.com/mono/mono)
-16.	ms (https://github.com/rauchg/ms.js)
-17.	os-tmpdir  (https://github.com/sindresorhus/os-tmpdir)
-18.	Pend  (https://github.com/andrewrk/node-pend)
-19.	RapidJSON (http://github.com/miloyip/rapidjson)
-20.	semver  (https://github.com/npm/node-semver)
-21.	SQLite (http://www.sqlite.org/index.html)
-22.	Tmp  (https://github.com/raszi/node-tmp)
-23.	yauzl  (https://github.com/thejoshwolfe/yauzl)
-24. neosmart/pevents (https://github.com/neosmart/pevents)
+10.	libc++ (http://libcxx.llvm.org/index.html)
+11.	LLDB  (http://lldb.llvm.org/)
+12.	LLVM (http://llvm.org/)
+13.	MI Debug Engine (https://github.com/Microsoft/MIEngine)
+14.	minimist  (https://github.com/substack/minimist)
+15.	mkdirp  (https://github.com/substack/node-mkdirp)
+16.	Mono  (https://github.com/mono/mono)
+17.	ms (https://github.com/rauchg/ms.js)
+18.	neosmart/pevents (https://github.com/neosmart/pevents)
+19.	os-tmpdir  (https://github.com/sindresorhus/os-tmpdir)
+20.	Pend  (https://github.com/andrewrk/node-pend)
+21.	RapidJSON (http://github.com/miloyip/rapidjson)
+22.	semver  (https://github.com/npm/node-semver)
+23.	SQLite (http://www.sqlite.org/index.html)
+24.	Tmp  (https://github.com/raszi/node-tmp)
+25.	yauzl  (https://github.com/thejoshwolfe/yauzl)
 
 
 %% agent-base  NOTICES AND INFORMATION BEGIN HERE
@@ -77,6 +77,7 @@ END OF Boost NOTICES AND INFORMATION
 %% Clang NOTICES AND INFORMATION BEGIN HERE
 =========================================
 LLVM Release License
+==============================================================================
 University of Illinois/NCSA
 Open Source License
 
@@ -288,6 +289,37 @@ THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 =========================================
 END OF https-proxy-agent  NOTICES AND INFORMATION
 
+%% libc++ NOTICES AND INFORMATION BEGIN HERE
+=========================================
+The libc++ library is dual licensed under both the University of Illinois
+"BSD-Like" license and the MIT license.  As a user of this code you may choose 
+to use it under either license.  
+==============================================================================
+MIT License
+
+Copyright (c) 2009-2014 by the contributors listed in CREDITS.TXT
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights 
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+=========================================
+END OF libc++ NOTICES AND INFORMATION
+
 %% LLDB  NOTICES AND INFORMATION BEGIN HERE
 =========================================
 University of Illinois/NCSA
@@ -333,6 +365,7 @@ END OF LLDB  NOTICES AND INFORMATION
 %% LLVM NOTICES AND INFORMATION BEGIN HERE
 =========================================
 LLVM Release License
+==============================================================================
 University of Illinois/NCSA
 Open Source License
 
@@ -483,6 +516,8 @@ END OF mkdirp  NOTICES AND INFORMATION
 
 %% Mono  NOTICES AND INFORMATION BEGIN HERE
 =========================================
+The Mono project may include other third party copyrights and notices, as listed in the 
+copyright.txt file included with the Mono project.
 
 The MIT License (MIT)
 
@@ -551,7 +586,7 @@ embeddable runtime:
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
 
-*  mono/utils/freebsd-elf_common.h, freebsd-elf64.h freebsd-elf32.h: BSD license.
+* mono/utils/freebsd-elf_common.h, freebsd-elf64.h freebsd-elf32.h: BSD license.
  * Copyright (c) 1998 John D. Polstra.
  * All rights reserved.
  *
@@ -664,6 +699,30 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
 END OF ms NOTICES AND INFORMATION
+
+%% neosmart/pevents  NOTICES AND INFORMATION BEGIN HERE
+=========================================
+Copyright (C) 2011 - 2015 by NeoSmart Technologies <http://neosmart.net/>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+=========================================
+END OF neosmart/pevents  NOTICES AND INFORMATION
 
 %% os-tmpdir  NOTICES AND INFORMATION BEGIN HERE
 =========================================
@@ -866,28 +925,6 @@ SOFTWARE.
 =========================================
 END OF yauzl  NOTICES AND INFORMATION
 
-%% neosmart/pevents  NOTICES AND INFORMATION BEGIN HERE
-=========================================
-Copyright (C) 2011 - 2015 by NeoSmart Technologies <http://neosmart.net/>
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
-=========================================
-END OF neosmart/pevents  NOTICES AND INFORMATION
 
 

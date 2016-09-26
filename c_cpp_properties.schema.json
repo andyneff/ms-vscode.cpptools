@@ -9,12 +9,8 @@
                 "required": [ "name" ],
                 "properties": {
                     "name": {
-                        "description": "Platform name",
-                        "enum": [
-                            "Mac",
-                            "Linux",
-                            "Win32"
-                        ]
+                        "description": "Platform name. Mac, Linux, or Win32 are the defaults unless a custom platform is added.",
+                        "type": "string"
                     },
                     "includePath": {
                         "description": "Search paths to look for header files. Specify '*' to indicate non-recursive search. For example: '/usr/includes' will search through all subdirectories while '/usr/includes/*' will not.",

@@ -4,7 +4,7 @@ var __extends = (this && this.__extends) || function (d, b) {
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
-var util = require('./common');
+var common_1 = require('../common');
 var os = require('os');
 var Process = (function () {
     function Process(name, pid, commandLine) {
@@ -62,7 +62,7 @@ var PsAttachItemsProvider = (function (_super) {
         var _this = this;
         var commColumnTitle = Array(PsAttachItemsProvider.secondColumnCharacters).join("a");
         var psCommand = ("ps -axww -o pid=,comm=" + commColumnTitle + ",args=") + (os.platform() === 'darwin' ? ' -c' : '');
-        return util.execChildProcess(psCommand, null).then(function (processes) {
+        return common_1.execChildProcess(psCommand, null).then(function (processes) {
             return _this.parseProcessFromPs(processes);
         });
     };
@@ -116,7 +116,7 @@ var WmicAttachItemsProvider = (function (_super) {
     WmicAttachItemsProvider.prototype.getInternalProcessEntries = function () {
         var _this = this;
         var wmicCommand = 'wmic process get Name,ProcessId,CommandLine /FORMAT:list';
-        return util.execChildProcess(wmicCommand, null).then(function (processes) {
+        return common_1.execChildProcess(wmicCommand, null).then(function (processes) {
             return _this.parseProcessFromWmic(processes);
         });
     };
