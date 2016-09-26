@@ -7,6 +7,8 @@ function activate(context) {
     var attacher = new attachToProcess_1.AttachPicker(attachItemsProvider);
     var disposable = vscode.commands.registerCommand('extension.pickNativeProcess', function () { return attacher.ShowAttachEntries(); });
     context.subscriptions.push(disposable);
+    disposable = vscode.commands.registerCommand('extension.pickDockerProcess', function (launchConfig) { return attacher.ShowDockerAttachEntries(launchConfig); });
+    context.subscriptions.push(disposable);
 }
 exports.activate = activate;
 function deactivate() {

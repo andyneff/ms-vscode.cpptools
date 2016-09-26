@@ -46,6 +46,13 @@ var NativeAttachItemsProvider = (function () {
             return attachItems;
         });
     };
+    NativeAttachItemsProvider.prototype.getDockerAttachItems = function (dockerName) {
+        return this.getDockerProcessEntries(dockerName).then(function (processEntries) {
+            processEntries.sort(function (a, b) { return a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1; });
+            var attachItems = processEntries.map(function (p) { return p.toAttachItem(); });
+            return attachItems;
+        });
+    };
     return NativeAttachItemsProvider;
 }());
 var PsAttachItemsProvider = (function (_super) {
@@ -63,6 +70,16 @@ var PsAttachItemsProvider = (function (_super) {
         var commColumnTitle = Array(PsAttachItemsProvider.secondColumnCharacters).join("a");
         var psCommand = ("ps -axww -o pid=,comm=" + commColumnTitle + ",args=") + (os.platform() === 'darwin' ? ' -c' : '');
         return common_1.execChildProcess(psCommand, null).then(function (processes) {
+            return _this.parseProcessFromPs(processes);
+        });
+    };
+    PsAttachItemsProvider.prototype.getDockerProcessEntries = function (dockerName) {
+        var _this = this;
+        PsAttachItemsProvider.secondColumnCharacters
+
+        var commColumnTitle = Array(PsAttachItemsProvider.secondColumnCharacters).join("a");
+        var psCommand = ("docker exec "+dockerName+" ps -axww -o pid=,comm=" + commColumnTitle + ",args=");
+        return util.execChildProcess(psCommand, null).then(function (processes) {
             return _this.parseProcessFromPs(processes);
         });
     };
