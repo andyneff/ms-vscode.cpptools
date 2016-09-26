@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
   <Metadata>
-    <Identity Language="en-US" Id="cpptools" Version="0.9.1" Publisher="ms-vscode"/>
+    <Identity Language="en-US" Id="cpptools" Version="0.9.2" Publisher="ms-vscode"/>
     <DisplayName>C/C++</DisplayName>
     <Description xml:space="preserve">Complete C/C++ language support including code-editing and debugging.</Description>
     <Tags>C,C++,keybindings,debuggers,json,c++</Tags>
@@ -9,11 +9,14 @@
     <GalleryFlags>Public Preview</GalleryFlags>
     <Badges></Badges>
     <Properties>
+      <Property Id="Microsoft.VisualStudio.Code.Engine" Value="^1.4.0" />
+      <Property Id="Microsoft.VisualStudio.Code.ExtensionDependencies" Value="" />
       
       <Property Id="Microsoft.VisualStudio.Services.Links.Support" Value="https://github.com/Microsoft/vscode-cpptools/issues" />
       
       
       
+      <Property Id="Microsoft.VisualStudio.Services.GitHubFlavoredMarkdown" Value="true" />
     </Properties>
     <License>extension/LICENSE.md</License>
     <Icon>extension/LanguageCCPP_color_128x.png</Icon>
