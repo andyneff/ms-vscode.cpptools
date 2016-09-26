@@ -1,1 +1,7 @@
 node_modules
+LLVM/
+ThirdPartyNotices.Mono.txt
+bin/Microsoft.VSCode.CPP.Extension.linux
+debugAdapters/framework/
+debugAdapters/mono.linux-x86_64
+install.lock

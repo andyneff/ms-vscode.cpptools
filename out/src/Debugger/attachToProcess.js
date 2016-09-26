@@ -1,5 +1,8 @@
 "use strict";
 var vscode = require('vscode');
+var fs = require('fs');
+var path = require('path');
+
 var AttachPicker = (function () {
     function AttachPicker(attachItemsProvider) {
         this.attachItemsProvider = attachItemsProvider;
@@ -19,7 +22,6 @@ var AttachPicker = (function () {
         });
     };
     AttachPicker.prototype.ShowDockerAttachEntries = function (launchConfig) {
-        console.log("The file was saved!");
         if (!("miDockerName" in launchConfig)){
             vscode.window.showErrorMessage('miDockerName is not specified in launch.json');
             return;
@@ -37,6 +39,18 @@ var AttachPicker = (function () {
                 return chosenProcess ? chosenProcess.id : null;
             });
         });
+    };
+    AttachPicker.prototype.DockerGdb = function (launchConfig) {
+        if (!("miDockerName" in launchConfig)){
+            vscode.window.showErrorMessage('miDockerName is not specified in launch.json');
+            return;
+        }
+
+        var filename = "./tmp_" + launchConfig.miDockerName;
+        fs.writeFileSync(filename, "#!/usr/bin/env bash\ndocker exec -it " + launchConfig.miDockerName + " gdb\nrm $0\n");
+        fs.chmodSync(filename, '0755');
+
+        return path.resolve(filename);
     };
     return AttachPicker;
 }());

@@ -79,7 +79,7 @@ var PsAttachItemsProvider = (function (_super) {
 
         var commColumnTitle = Array(PsAttachItemsProvider.secondColumnCharacters).join("a");
         var psCommand = ("docker exec "+dockerName+" ps -axww -o pid=,comm=" + commColumnTitle + ",args=");
-        return util.execChildProcess(psCommand, null).then(function (processes) {
+        return common_1.execChildProcess(psCommand, null).then(function (processes) {
             return _this.parseProcessFromPs(processes);
         });
     };
