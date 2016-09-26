@@ -1,0 +1,30 @@
+  {
+    "defaults": [
+      "cpfe",
+      "--wchar_t_keyword",
+      "--c++",
+      "--no_warnings",
+      "--edge",
+      "--new_for_init",
+      "--rtti"
+    ],
+    "source_file_format": "-f %s",
+    "expressions": [
+      {
+        "match": "/I(.*)",
+        "replace": "-I\n$1"
+      },
+      {
+        "match": "/D(.*)",
+        "replace": "-D$1"
+      },
+      {
+        "match": "/AI(.*)",
+        "replace": "--using_directory\n$1"
+      },
+      {
+        "match": "/EHsc",
+        "replace": "-D_CPPUNWIND\n--exceptions"
+      }
+    ]
+  }

@@ -1,0 +1,13 @@
+  {
+    "defaults": [
+      "test64.intel"
+    ],
+    "default_op" : "replace",
+    "source_file_format": "test64.intel",
+    "expressions": [
+      {
+        "match": "test64.intel",
+        "replace": "-I\n$1"
+      }
+    ]
+  }
