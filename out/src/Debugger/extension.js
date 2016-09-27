@@ -13,6 +13,8 @@ function activate(context) {
     context.subscriptions.push(disposable);
     disposable = vscode.commands.registerCommand('extension.pickRemoteProcess', function (launchConfig) { return attacher.ShowRemoteAttachEntries(launchConfig); });
     context.subscriptions.push(disposable);
+    disposable = vscode.commands.registerCommand('extension.makeGdbScript', function (launchConfig) { return attacher.MakeGdbScript(launchConfig); });
+    context.subscriptions.push(disposable);
 }
 exports.activate = activate;
 function deactivate() {
