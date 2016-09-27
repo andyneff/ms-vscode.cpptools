@@ -53,6 +53,13 @@ var NativeAttachItemsProvider = (function () {
             return attachItems;
         });
     };
+    NativeAttachItemsProvider.prototype.getRemoteAttachItems = function (adddress) {
+        return this.getRemoteProcessEntries(adddress).then(function (processEntries) {
+            processEntries.sort(function (a, b) { return a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1; });
+            var attachItems = processEntries.map(function (p) { return p.toAttachItem(); });
+            return attachItems;
+        });
+    };
     return NativeAttachItemsProvider;
 }());
 var PsAttachItemsProvider = (function (_super) {
@@ -71,6 +78,19 @@ var PsAttachItemsProvider = (function (_super) {
         var psCommand = ("ps -axww -o pid=,comm=" + commColumnTitle + ",args=") + (os.platform() === 'darwin' ? ' -c' : '');
         return common_1.execChildProcess(psCommand, null).then(function (processes) {
             return _this.parseProcessFromPs(processes);
+        });
+    };
+    PsAttachItemsProvider.prototype.getRemoteProcessEntries = function (address) {
+        var _this = this;
+        var psCommand = "gdb -q -ex 'target extended-remote "+address+"' "
+        psCommand += "-ex 'python import tempfile; tmp=tempfile.NamedTemporaryFile(); gdb.execute(\"set logging file \"+tmp.name)' "
+        psCommand += "-ex 'set logging on' "
+        psCommand += "-ex 'info os processes' "
+        psCommand += "-ex 'set logging off' "
+        psCommand += "-ex 'python pids = open(tmp.name, \"r\").readlines()[1:]; [print(\"%s %"+PsAttachItemsProvider.secondColumnCharacters+"s %s\" % tuple(pid.split(None, 2))) for pid in pids]' "
+        psCommand += "-ex q"
+        return common_1.execChildProcess(psCommand, null).then(function (processes) {
+            return _this.parseProcessFromPs(processes.split("\nDone logging")[1]);
         });
     };
     PsAttachItemsProvider.prototype.getDockerProcessEntries = function (dockerName) {

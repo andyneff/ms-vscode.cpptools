@@ -11,6 +11,8 @@ function activate(context) {
     context.subscriptions.push(disposable);
     disposable = vscode.commands.registerCommand('extension.gdbDocker', function (launchConfig) { return attacher.DockerGdb(launchConfig); });
     context.subscriptions.push(disposable);
+    disposable = vscode.commands.registerCommand('extension.pickRemoteProcess', function (launchConfig) { return attacher.ShowRemoteAttachEntries(launchConfig); });
+    context.subscriptions.push(disposable);
 }
 exports.activate = activate;
 function deactivate() {

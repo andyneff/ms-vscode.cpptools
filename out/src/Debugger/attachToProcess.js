@@ -40,6 +40,25 @@ var AttachPicker = (function () {
             });
         });
     };
+    AttachPicker.prototype.ShowRemoteAttachEntries = function (launchConfig) {
+        if (!("miDebuggerServerAddress" in launchConfig)){
+            vscode.window.showErrorMessage('miDebuggerServerAddress is not specified in launch.json');
+            return;
+        }
+
+        return this.attachItemsProvider.getRemoteAttachItems(launchConfig.miDebuggerServerAddress)
+            .then(function (processEntries) {
+            var attachPickOptions = {
+                matchOnDescription: true,
+                matchOnDetail: true,
+                placeHolder: "Select the process to attach to"
+            };
+            return vscode.window.showQuickPick(processEntries, attachPickOptions)
+                .then(function (chosenProcess) {
+                return chosenProcess ? chosenProcess.id : null;
+            });
+        });
+    };
     AttachPicker.prototype.DockerGdb = function (launchConfig) {
         if (!("miDockerName" in launchConfig)){
             vscode.window.showErrorMessage('miDockerName is not specified in launch.json');
