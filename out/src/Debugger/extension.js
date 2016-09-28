@@ -15,6 +15,10 @@ function activate(context) {
     context.subscriptions.push(disposable);
     disposable = vscode.commands.registerCommand('extension.makeGdbScript', function (launchConfig) { return attacher.MakeGdbScript(launchConfig); });
     context.subscriptions.push(disposable);
+    disposable = vscode.commands.registerCommand('extension.pickDockerName', function (launchConfig) { return attacher.ShowDockerNameEntries(launchConfig); });
+    context.subscriptions.push(disposable);
+    disposable = vscode.commands.registerCommand('extension.getDockerProcessName', function (launchConfig) { return attachItemsProvider.getDockerProcessName(launchConfig); });
+    context.subscriptions.push(disposable);
 }
 exports.activate = activate;
 function deactivate() {

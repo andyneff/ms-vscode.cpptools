@@ -21,6 +21,20 @@ var AttachPicker = (function () {
             });
         });
     };
+    AttachPicker.prototype.ShowDockerNameEntries = function (launchConfig) {
+        return this.attachItemsProvider.getDockerItems()
+            .then(function (processEntries) {
+            var attachPickOptions = {
+                matchOnDescription: true,
+                matchOnDetail: true,
+                placeHolder: "Select the docker to attach to"
+            };
+            return vscode.window.showQuickPick(processEntries, attachPickOptions)
+                .then(function (chosenDocker) {
+                return chosenDocker ? chosenDocker.id : null;
+            });
+        });
+    };
     AttachPicker.prototype.ShowDockerAttachEntries = function (launchConfig) {
         if (!("miDockerName" in launchConfig)){
             vscode.window.showErrorMessage('miDockerName is not specified in launch.json');

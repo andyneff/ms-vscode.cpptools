@@ -22,6 +22,23 @@ var Process = (function () {
     };
     return Process;
 }());
+var Docker = (function () {
+    function Docker(id, name, image, labels) {
+        this.name = name + "["+id+"]";
+        this.id = id;
+        this.image = image
+        this.labels = labels;
+    }
+    Docker.prototype.toAttachItem = function () {
+        return {
+            label: this.name,
+            description: this.labels,
+            detail: this.image,
+            id: this.id
+        };
+    };
+    return Docker;
+}());
 var NativeAttachItemsProviderFactory = (function () {
     function NativeAttachItemsProviderFactory() {
     }
@@ -42,6 +59,12 @@ var NativeAttachItemsProvider = (function () {
     NativeAttachItemsProvider.prototype.getAttachItems = function () {
         return this.getInternalProcessEntries().then(function (processEntries) {
             processEntries.sort(function (a, b) { return a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1; });
+            var attachItems = processEntries.map(function (p) { return p.toAttachItem(); });
+            return attachItems;
+        });
+    };
+    NativeAttachItemsProvider.prototype.getDockerItems = function () {
+        return this.getDockerEntries().then(function (processEntries) {
             var attachItems = processEntries.map(function (p) { return p.toAttachItem(); });
             return attachItems;
         });
@@ -79,6 +102,44 @@ var PsAttachItemsProvider = (function (_super) {
         return common_1.execChildProcess(psCommand, null).then(function (processes) {
             return _this.parseProcessFromPs(processes);
         });
+    };
+    PsAttachItemsProvider.prototype.getDockerEntries = function () {
+        var _this = this;
+        var psCommand = ("docker ps --format '{{.ID}}\t{{.Names}}\t{{.Image}}\t{{.Labels}}'");
+        return common_1.execChildProcess(psCommand, null).then(function (dockers) {
+            return _this.parseDockersFromPs(dockers);
+        });
+    };
+    PsAttachItemsProvider.prototype.getDockerProcessName = function (launchConfig) {
+        if (!("miDockerName" in launchConfig && "dockerProcessId" in launchConfig)){
+            vscode.window.showErrorMessage('miDockerName or dockerProcessId is not specified in launch.json');
+            return;
+        }
+
+        var psCommand = ("docker exec "+launchConfig.miDockerName+" ps -o comm= "+launchConfig.dockerProcessId);
+        return common_1.execChildProcess(psCommand, null).then(function (processName) {
+            return processName.trim();
+        });
+    };
+    PsAttachItemsProvider.prototype.parseDockersFromPs = function (processes) {
+        var lines = processes.split(os.EOL);
+        var dockerEntries = [];
+        for (var i = 0; i < lines.length; i++) {
+            var line = lines[i];
+            if (!line) {
+                continue;
+            }
+            var docker_1 = this.parseDockerLineFromPs(line);
+            dockerEntries.push(docker_1);
+        }
+        return dockerEntries;
+    };
+    PsAttachItemsProvider.prototype.parseDockerLineFromPs = function (line) {
+        var dockerEntry = line.split('\t');
+        dockerEntry.push(dockerEntry.splice(3).join('\t'));
+        //Combine all entries after 4. I'm not sure if labels can have tabs or not
+        dockerEntry = dockerEntry.map(function(v){return v.trim();});
+        return new Docker(dockerEntry[0], dockerEntry[1], dockerEntry[2], dockerEntry[3]);
     };
     PsAttachItemsProvider.prototype.getRemoteProcessEntries = function (address) {
         var _this = this;
