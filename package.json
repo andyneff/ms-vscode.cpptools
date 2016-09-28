@@ -137,7 +137,12 @@
         "program": "./debugAdapters/OpenDebugAD7",
         "aiKey": "AIF-d9b70cd4-b9f9-4d70-929b-a071c400b217",
         "variables": {
-          "pickProcess": "extension.pickNativeProcess"
+          "pickProcess": "extension.pickNativeProcess",
+          "pickLocalProcess": "extension.pickNativeProcess",
+          "pickDockerProcess": "extension.pickDockerProcess",
+          "gdbDocker": "extension.gdbDocker",
+          "pickRemoteProcess": "extension.pickRemoteProcess",
+          "remoteGdb": "extension.makeGdbScript"
         },
         "initialConfigurations": [
           {
