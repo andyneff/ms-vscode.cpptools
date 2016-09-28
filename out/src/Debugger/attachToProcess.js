@@ -41,12 +41,12 @@ var AttachPicker = (function () {
         });
     };
     AttachPicker.prototype.ShowRemoteAttachEntries = function (launchConfig) {
-        if (!("miRemoteServerAddress" in launchConfig)){
-            vscode.window.showErrorMessage('miRemoteServerAddress is not specified in launch.json');
+        if (!("miDebuggerServerAddress" in launchConfig)){
+            vscode.window.showErrorMessage('miDebuggerServerAddress is not specified in launch.json');
             return;
         }
 
-        return this.attachItemsProvider.getRemoteAttachItems(launchConfig.miRemoteServerAddress)
+        return this.attachItemsProvider.getRemoteAttachItems(launchConfig.miDebuggerServerAddress)
             .then(function (processEntries) {
             var attachPickOptions = {
                 matchOnDescription: true,
@@ -60,14 +60,14 @@ var AttachPicker = (function () {
         });
     };
     AttachPicker.prototype.MakeGdbScript = function (launchConfig) {
-        if (!("miRemoteServerAddress" in launchConfig)){
-            vscode.window.showErrorMessage('miRemoteServerAddress is not specified in launch.json');
+        if (!("miDebuggerServerAddress" in launchConfig)){
+            vscode.window.showErrorMessage('miDebuggerServerAddress is not specified in launch.json');
             return;
         }
 
         var filename = path.resolve(vscode.extensions.all.find(o => o.id == "ms-vscode.cpptools").extensionPath, 
-                                    "gdb_" + launchConfig.miRemoteServerAddress.replace(':','_'));
-        fs.writeFileSync(filename, "#!/usr/bin/env bash\ntouch /tmp/wtf\ngdb -ex 'target extended-remote "+launchConfig.miRemoteServerAddress+"' \"${@}\"\nrm $0\n");
+                                    "gdb_" + launchConfig.miDebuggerServerAddress.replace(':','_'));
+        fs.writeFileSync(filename, "#!/usr/bin/env bash\ntouch /tmp/wtf\ngdb -ex 'target extended-remote "+launchConfig.miDebuggerServerAddress+"' \"${@}\"\nrm $0\n");
         fs.chmodSync(filename, '0755');
 
         return filename;
