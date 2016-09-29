@@ -146,7 +146,8 @@
           "gdbDocker": "extension.gdbDocker",
           "pickRemoteProcess": "extension.pickRemoteProcess",
           "remoteGdb": "extension.makeGdbScript",
-          "remoteCopyProgram": "extension.remoteCopyProgram"
+          "remoteCopyProgram": "extension.remoteCopyProgram",
+          "remoteCopyProgramMulti": "extension.remoteCopyProgramMulti"
         },
         "initialConfigurations": [
           {

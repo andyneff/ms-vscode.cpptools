@@ -74,20 +74,39 @@ var AttachPicker = (function () {
             });
         });
     };
-    AttachPicker.prototype.RemoteCopyProgram = function (launchConfig) {
-        if (!("remoteProcessId" in launchConfig)){
-            vscode.window.showErrorMessage('remoteProcessIdis not specified in launch.json');
-            return;
+    AttachPicker.prototype.RemoteCopyProgram = function (launchConfig, multi=False) {
+        var gdbCommand = 'gdb -q ';
+        // Shhh, be vewy vewy quiet
+        var pid;
+        if (multi){
+            if (!("remoteProcessId" in launchConfig)){
+                vscode.window.showErrorMessage('remoteProcessIdis not specified in launch.json');
+                return;
+            }
+
+            gdbCommand += '-ex \'target extended-remote '+launchConfig.miDebuggerServerAddress+'\' ';
+            pid = launchConfig.remoteProcessId; 
+        }else{
+            gdbCommand += '-ex \'target remote '+launchConfig.miDebuggerServerAddress+'\' ';
+            pid = '"+str(gdb.inferiors()[0].pid)+"'
+            //Since it's already attached as an inferior, just ask python
         }
-        var gdbCommand = 'gdb -q '+
-                         '-ex \'target extended-remote '+launchConfig.miDebuggerServerAddress+'\' ' +
-                         '-ex \'python import tempfile;' +
-                                      'file=tempfile.NamedTemporaryFile(delete=False);' +
-                                      'gdb.execute("remote get /proc/'+launchConfig.remoteProcessId+'/exe "+file.name)\' ' +
-                         '-ex \'python print(file.name)\' ' +
-                         '-ex q'
+        gdbCommand += '-ex \'python import tempfile;' +
+                                   'file=tempfile.NamedTemporaryFile(delete=False);' +
+                                   'gdb.execute("remote get /proc/'+pid+'/exe "+file.name)\' ' +
+                      //Using python in gdb, create a tempfile and get the executable and copy it locally
+                      '-ex \'python print(file.name)\' ' +
+                      //Print the filename to be parsed in the return
+                      '-ex disconnect ' +
+                      //disconnect is important for non-multi mode. Just quiting will kill the process,
+                      //disconnect allows it to start attached and wait for another client to connect to
+                      //gdbserver, unless the --once flag is used. But at that point they are just making
+                      //difficult. If --once is used, you can't use remoteCopyProgram
+                      '-ex q 2>&1'
+                      //Redirect stderr because common_1.execChildProcess inteprets all stderr as bad. I should probably just
+                      //call execChild myself at this point 
         return common_1.execChildProcess(gdbCommand, null).then(function (output) {
-            return output.split('\n')[1];
+            return output.split('\n').slice(-3)[0];
         });
     }
     AttachPicker.prototype.MakeGdbScript = function (launchConfig) {
