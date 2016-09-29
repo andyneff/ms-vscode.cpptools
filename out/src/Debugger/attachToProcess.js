@@ -141,6 +141,7 @@ var AttachPicker = (function () {
         var filename = path.resolve(vscode.extensions.all.find(o => o.id == "ms-vscode.cpptools").extensionPath,
                                     "gdb_" + launchConfig.miDebuggerServerAddress.replace(':','_'));
         fs.writeFileSync(filename, "#!/usr/bin/env bash\n"+
+                                    "tee /tmp/mi | " + 
                                     "sed -ur -e 's/^([0-9]*-target-select) remote (.*)/\\1 extended-remote \\2\\n"+
                                                                                        "-target-attach "+launchConfig.remoteProcessId+"/' | " +
                                     "gdb " + gdbCommands + " \"${@}\"" +

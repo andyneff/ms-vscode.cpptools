@@ -22,6 +22,82 @@ You can find more detailed information about C/C++ support on Visual Studio Code
 If you run into any problems, please file an issue on [GitHub](https://github.com/Microsoft/vscode-cpptools/issues).
 
 ## Change History
+### My modifications ###
+
+I'm working on getting gdb working with the current plug in capabiliteis for gdbserver and dockers. This covers a number of scenarios
+
+#### gdbserver used as normal ####
+
+Is covered pretty well [here](https://github.com/Microsoft/vscode-cpptools/issues/265#issuecomment-250339508)
+
+Launch configuration `"program": "${command.remoteCopyProgram}",` can optionally be used to copy the remote program locally for you
+(Currently this is not cleaned up, leading to a lot of random files in your temp dir)
+
+#### gdbserver used in --multi mode ####
+
+Currently only works in a `launch` configuration (on Linux). Here's an example
+
+1. Run `gdbserver 0.0.0.0:6666` (or what ever ip/port you want)
+2. Create a `lanch.json` like this
+
+```
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "C++ Launch",
+            "type": "cppdbg",
+            "request": "launch",
+            "args": [],
+            "stopAtEntry": true,
+            "cwd": "${workspaceRoot}",
+            "environment": [],
+            "externalConsole": true,
+
+            "miDebuggerServerAddress": "localhost:6666",
+            "remoteProcessId": "${command.pickRemoteProcess}",
+            "program": "${command.remoteCopyProgramMulti}",
+            "miDebuggerPath": "${command.remoteGdbMulti}",
+
+            "miDebuggerGdbCommands": ["directory /opt/projects/myproject/somedir/"],
+
+
+            "linux": {
+                "MIMode": "gdb"
+            },
+            "osx": {
+                "MIMode": "lldb"
+            },
+            "windows": {
+                "MIMode": "gdb"
+            }
+        }
+    ]
+}
+```
+
+Because this is a nasty hack, the order of the four lines in the center matter since each one uses the previous
+
+I added:
+
+- `"${command.pickRemoteProcess}"` - Which will allow you to pick a process that is running on  miDebuggerServerAddress just like `"${command.pickProcess}"`. Of course you could just type in the pid number manually
+- `"${command.remoteCopyProgramMulti}"` - Which automatically copies the binary from the remote server so that symbols can be loaded. Of course you could just use your own copy
+- `"${command.remoteGdbMulti}"` - This is the part that you need to make it work. It creates a temporary wrapper script to fix all the current issues getting `--multi` mode working
+- Added `miDebuggerGdbCommands` - This allows you to specify an array of gdb command run on initilization. This is equivalent to .gdbinit [here](http://wiki.eclipse.org/CDT/User/FAQ), only I argue not having to make "yet another file" is better
+
+It may be possible to get `command.remoteGdbMulti` working in windows, using batch, but I wasn't concerned with that. This is more of a proof of concept
+
+##### How can all this become not neccesary? #####
+
+1. Need a flag to switch mi command `-target-select remote`  to `-target-select extended-remote + -target-attach`
+2. `miDebuggerGdbCommands` as an optional argument to add any command to gdb startup
+3. A way to have the source program copied locally before attaching would be useful to make the entire debugging experience fluid
+4. An offical version of `command.pickRemoteProcess`
+
+#### gdb in a docker ####
+
+*Work in progress*
+
 ### Version 0.9.2: September 22, 2016
 * Bug fixes.
 

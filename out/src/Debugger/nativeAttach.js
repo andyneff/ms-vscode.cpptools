@@ -166,10 +166,10 @@ var PsAttachItemsProvider = (function (_super) {
         //Turn off loggging
         psCommand += "-ex 'python pids = open(tmp.name, \"r\").readlines()[1:]; [print(\"%s %"+PsAttachItemsProvider.secondColumnCharacters+"s %s\" % tuple(pid.split(None, 2))) for pid in pids]' "
         //Read in file, parse, and output it in an identical ps format 
-        psCommand += "-ex disconnect"
+        psCommand += "-ex disconnect "
         psCommand += "-ex q"
         return common_1.execChildProcess(psCommand, null).then(function (processes) {
-            return _this.parseProcessFromPs(processes.split("\nDone logging")[1]);
+            return _this.parseProcessFromPs(processes.split("\nDone logging")[1].split('\nEnding remote debugging.')[0]);
             //Remove Done logging message and everything after it
         });
     };
