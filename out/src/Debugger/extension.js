@@ -21,6 +21,8 @@ function activate(context) {
     context.subscriptions.push(disposable);
     disposable = vscode.commands.registerCommand('extension.getRandomProcessName', function (launchConfig) { return attachItemsProvider.getRandomProcessName(launchConfig); });
     context.subscriptions.push(disposable);
+    disposable = vscode.commands.registerCommand('extension.remoteCopyProgram', function (launchConfig) { return attacher.RemoteCopyProgram(launchConfig); });
+    context.subscriptions.push(disposable);
 }
 exports.activate = activate;
 function deactivate() {

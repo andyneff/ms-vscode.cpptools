@@ -2,6 +2,7 @@
 var vscode = require('vscode');
 var fs = require('fs');
 var path = require('path');
+var common_1 = require('../common');
 
 var AttachPicker = (function () {
     function AttachPicker(attachItemsProvider) {
@@ -73,6 +74,22 @@ var AttachPicker = (function () {
             });
         });
     };
+    AttachPicker.prototype.RemoteCopyProgram = function (launchConfig) {
+        if (!("remoteProcessId" in launchConfig)){
+            vscode.window.showErrorMessage('remoteProcessIdis not specified in launch.json');
+            return;
+        }
+        var gdbCommand = 'gdb -q '+
+                         '-ex \'target extended-remote '+launchConfig.miDebuggerServerAddress+'\' ' +
+                         '-ex \'python import tempfile;' +
+                                      'file=tempfile.NamedTemporaryFile(delete=False);' +
+                                      'gdb.execute("remote get /proc/'+launchConfig.remoteProcessId+'/exe "+file.name)\' ' +
+                         '-ex \'python print(file.name)\' ' +
+                         '-ex q'
+        return common_1.execChildProcess(gdbCommand, null).then(function (output) {
+            return output.split('\n')[1];
+        });
+    }
     AttachPicker.prototype.MakeGdbScript = function (launchConfig) {
         if (!("miDebuggerServerAddress" in launchConfig && "remoteProcessId" in launchConfig)){
             vscode.window.showErrorMessage('miDebuggerServerAddress or remoteProcessIdis not specified in launch.json');
@@ -95,10 +112,15 @@ var AttachPicker = (function () {
         var filename = path.resolve(vscode.extensions.all.find(o => o.id == "ms-vscode.cpptools").extensionPath,
                                     "gdb_" + launchConfig.miDebuggerServerAddress.replace(':','_'));
         fs.writeFileSync(filename, "#!/usr/bin/env bash\n"+
-                                    "tee /tmp/mi.in | grep --line-buffered -Ev '^[0-9]*-target-select|^[0-9]*-file-exec-and-symbols' | gdb " + gdbCommands + " \"${@}\" | tee /tmp/mi.out\n");//+
+                                    "tee /tmp/mi.in | "+
+//                                    "sed -r 's/^([0-9]*-file-exec-and-symbols ).*/\\1 "++"/'"
+                                    "sed -r 's/^([0-9]*-target-select) remote/\\1 extended-remote/'" +
+//                                    "grep --line-buffered -Ev '^[0-9]*-target-select|^[0-9]*-file-exec-and-symbols' | "+
+                                    "gdb " + gdbCommands + " \"${@}\" | "+
+                                    "tee /tmp/mi.out\n");//+
 //                                    "rm $0\n");
 
-        fs.chmodSync(filename, '0755');
+//        fs.chmodSync(filename, '0755');
 
         return filename;
     };
