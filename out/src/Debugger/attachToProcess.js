@@ -133,9 +133,11 @@ var AttachPicker = (function () {
         fs.writeFileSync(filename, "#!/usr/bin/env bash\n"+
                                     "tee /tmp/mi.in | "+
 //                                    "sed -r 's/^([0-9]*-file-exec-and-symbols ).*/\\1 "++"/'"
-                                    "sed -ur -e 's/^([0-9]*-target-select) remote/\\1 extended-remote/' " +
-                                            "-e 's/-gdb-exit//' " +
-                                            "-e 's/^([0-9]*)-exec-run/\\1-target-attach "+launchConfig.remoteProcessId+"/' |" +
+                                    "sed -ur -e 's/^([0-9]*-target-select) remote (.*)/\\1 extended-remote \\2\\n"+
+                                                                                       "-target-attach "+launchConfig.remoteProcessId+"/' | " +
+///                                            "-e 's/-gdb-exit//' " +
+///                                            "-e 's/^([0-9]*)-exec-run//' |" +
+//                                            "-e 's/^([0-9]*)-exec-run/\\1-target-attach "+launchConfig.remoteProcessId+"/' |" +
 //                                    "grep --line-buffered -Ev '^[0-9]*-target-select|^[0-9]*-file-exec-and-symbols' | "+
                                     "gdb " + gdbCommands + " \"${@}\"" +
                                     " | tee /tmp/mi.out\n");//+
