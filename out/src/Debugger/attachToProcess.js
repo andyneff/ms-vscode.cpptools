@@ -98,6 +98,9 @@ var AttachPicker = (function () {
             pid = '"+str(gdb.inferiors()[0].pid)+"'
             //Since it's already attached as an inferior, just ask python
         }
+        if (pid === "null"){
+            return;
+        }
         gdbCommand += '-ex \'python import tempfile;' +
                                    'file=tempfile.NamedTemporaryFile(delete=False);' +
                                    'gdb.execute("remote get /proc/'+pid+'/exe "+file.name)\' ' +
@@ -113,7 +116,10 @@ var AttachPicker = (function () {
                       //Redirect stderr because common_1.execChildProcess inteprets all stderr as bad. I should probably just
                       //call execChild myself at this point 
         return common_1.execChildProcess(gdbCommand, null).then(function (output) {
-            return output.split('\n').slice(-3)[0];
+            var tempFileName =  output.split('\n').slice(-3)[0];
+            if (global.remoteCopy === undefined){ global.remoteCopy = [];};
+            global.remoteCopy.push(tempFileName);
+            return tempFileName;
         });
     }
     AttachPicker.prototype.MakeGdbScriptMulti = function (launchConfig) {
@@ -127,10 +133,15 @@ var AttachPicker = (function () {
         }
 
         var gdbCommands = []
-        gdbCommands.push("python import os,tempfile;" +
-                                "file=tempfile._TemporaryFileWrapper(open(os.devnull, 'r'), '"+launchConfig.program+"', True)")
-        //This is part of auto cleanup. It sideloads a temporary file, so that when gdb exists, python atexit deletes the file(s)
-        //BAD IDEA, will delete a localfile that wasn't temporary too! Woops :)
+        if (!(global.remoteCopy === undefined)){
+            var index = global.remoteCopy.indexOf(launchConfig.program);
+            if (index >= 0){
+                gdbCommands.push("python import os,tempfile;" +
+                                 "file=tempfile._TemporaryFileWrapper(open(os.devnull, 'r'), '"+launchConfig.program+"', True)")
+                //This is part of auto cleanup. It sideloads a temporary file, so that when gdb exists, python atexit deletes the file(s)
+                global.remoteCopy.splice(index, 1);
+            }
+        }
 
         if ("miDebuggerGdbCommands" in launchConfig){
             gdbCommands = gdbCommands.concat(launchConfig.miDebuggerGdbCommands)
@@ -144,7 +155,7 @@ var AttachPicker = (function () {
                                     "tee /tmp/mi | " + 
                                     "sed -ur -e 's/^([0-9]*-target-select) remote (.*)/\\1 extended-remote \\2\\n"+
                                                                                        "-target-attach "+launchConfig.remoteProcessId+"/' | " +
-                                    "gdb " + gdbCommands + " \"${@}\"" +
+                                    "gdb " + gdbCommands + " \"${@}\"\n" +
                                     "rm $0\n");
 
         fs.chmodSync(filename, '0755');
