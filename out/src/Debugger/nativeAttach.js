@@ -6,6 +6,9 @@ var __extends = (this && this.__extends) || function (d, b) {
 };
 var common_1 = require('../common');
 var os = require('os');
+var fs = require('fs');
+var vscode = require('vscode');
+var path = require('path');
 var Process = (function () {
     function Process(name, pid, commandLine) {
         this.name = name;
@@ -120,6 +123,28 @@ var PsAttachItemsProvider = (function (_super) {
         return common_1.execChildProcess(psCommand, null).then(function (processName) {
             return processName.trim();
         });
+    };
+    PsAttachItemsProvider.prototype.getRandomProcessName = function (launchConfig) {
+        var name = "r"+Math.random(1, 10)
+        name=name.replace('.', '')
+        var filename = path.resolve(vscode.extensions.all.find(o => o.id == "ms-vscode.cpptools").extensionPath, 
+                                    name);
+        var wrapper=filename+"wrap"
+
+        fs.writeFileSync(wrapper, "#!/usr/bin/env bash\n"+filename+" 10\nrm $0 "+filename+"\n");
+        
+        var fdr = fs.openSync('/bin/sleep', 'r')
+        var fdw = fs.openSync(filename, 'w')
+        fs.writeFileSync(fdw,fs.readFileSync(fdr))
+        fs.closeSync(fdr)
+        fs.closeSync(fdw)
+
+        fs.chmodSync(filename, '0755');
+        fs.chmodSync(wrapper, '0755');
+
+        common_1.execChildProcess(wrapper, null);
+        
+        return name
     };
     PsAttachItemsProvider.prototype.parseDockersFromPs = function (processes) {
         var lines = processes.split(os.EOL);

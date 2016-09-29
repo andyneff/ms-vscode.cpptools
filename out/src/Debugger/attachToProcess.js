@@ -74,14 +74,30 @@ var AttachPicker = (function () {
         });
     };
     AttachPicker.prototype.MakeGdbScript = function (launchConfig) {
-        if (!("miDebuggerServerAddress" in launchConfig)){
-            vscode.window.showErrorMessage('miDebuggerServerAddress is not specified in launch.json');
+        if (!("miDebuggerServerAddress" in launchConfig && "remoteProcessId" in launchConfig)){
+            vscode.window.showErrorMessage('miDebuggerServerAddress or remoteProcessIdis not specified in launch.json');
             return;
         }
 
-        var filename = path.resolve(vscode.extensions.all.find(o => o.id == "ms-vscode.cpptools").extensionPath, 
+        var gdbCommands = []
+        gdbCommands.push("target extended-remote "+launchConfig.miDebuggerServerAddress)
+        gdbCommands.push("python import tempfile;" +
+                                "file=tempfile.NamedTemporaryFile(delete=True);" +
+                                "gdb.execute('remote get /proc/"+launchConfig.remoteProcessId+"/exe '+file.name);"+
+                                "gdb.execute('file '+file.name);")
+        if ("miDebuggerGdbCommands" in launchConfig){
+            gdbCommands = gdbCommands.concat(launchConfig.miDebuggerGdbCommands)
+        }
+
+        gdbCommands.push("attach "+launchConfig.remoteProcessId)
+        gdbCommands = '-ex "'+gdbCommands.map((x) => {return x.replace('"', '\\"');}).join('" -ex "')+'"'
+
+        var filename = path.resolve(vscode.extensions.all.find(o => o.id == "ms-vscode.cpptools").extensionPath,
                                     "gdb_" + launchConfig.miDebuggerServerAddress.replace(':','_'));
-        fs.writeFileSync(filename, "#!/usr/bin/env bash\ntouch /tmp/wtf\ngdb -ex 'target extended-remote "+launchConfig.miDebuggerServerAddress+"' \"${@}\"\nrm $0\n");
+        fs.writeFileSync(filename, "#!/usr/bin/env bash\n"+
+                                    "tee /tmp/mi.in | grep --line-buffered -Ev '^[0-9]*-target-select|^[0-9]*-file-exec-and-symbols' | gdb " + gdbCommands + " \"${@}\" | tee /tmp/mi.out\n");//+
+//                                    "rm $0\n");
+
         fs.chmodSync(filename, '0755');
 
         return filename;
@@ -94,7 +110,7 @@ var AttachPicker = (function () {
 
         var filename = path.resolve(vscode.extensions.all.find(o => o.id == "ms-vscode.cpptools").extensionPath, 
                                     "tmp_" + launchConfig.miDockerName);
-        fs.writeFileSync(filename, "#!/usr/bin/env bash\ndocker exec -it " + launchConfig.miDockerName + " gdb \"${@}\"\nrm $0\n");
+        fs.writeFileSync(filename, "#!/usr/bin/env bash\necho ${@} > /tmp/wtf\ndocker exec -it " + launchConfig.miDockerName + " gdb \"$1\"\nrm $0\n");
         fs.chmodSync(filename, '0755');
 
         return filename;

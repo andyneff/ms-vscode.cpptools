@@ -142,6 +142,7 @@
           "pickDockerProcess": "extension.pickDockerProcess",
           "pickDockerName": "extension.pickDockerName",
           "getDockerProcessName": "extension.getDockerProcessName",
+          "getRandomProcessName": "extension.getRandomProcessName",
           "gdbDocker": "extension.gdbDocker",
           "pickRemoteProcess": "extension.pickRemoteProcess",
           "remoteGdb": "extension.makeGdbScript"
