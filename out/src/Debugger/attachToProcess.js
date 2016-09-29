@@ -23,6 +23,7 @@ var AttachPicker = (function () {
         });
     };
     AttachPicker.prototype.ShowDockerNameEntries = function (launchConfig) {
+    //Get list of all running docker using docker ps, and choose one 
         return this.attachItemsProvider.getDockerItems()
             .then(function (processEntries) {
             var attachPickOptions = {
@@ -37,6 +38,7 @@ var AttachPicker = (function () {
         });
     };
     AttachPicker.prototype.ShowDockerAttachEntries = function (launchConfig) {
+    //Get list of all processes in docker using docker exec to run ps, and choose one 
         if (!("miDockerName" in launchConfig)){
             vscode.window.showErrorMessage('miDockerName is not specified in launch.json');
             return;
@@ -56,6 +58,9 @@ var AttachPicker = (function () {
         });
     };
     AttachPicker.prototype.ShowRemoteAttachEntries = function (launchConfig) {
+    //Using gdb, query the remote processes. This uses "info os processes", which ironically doesn't work on my Mint 18
+    //For some reason. It was complaining about an invalid charecter. But I can't reproduce that error, and even then
+    //"info os threads" worked *shrugs*
         if (!("miDebuggerServerAddress" in launchConfig)){
             vscode.window.showErrorMessage('miDebuggerServerAddress is not specified in launch.json');
             return;
@@ -75,6 +80,8 @@ var AttachPicker = (function () {
         });
     };
     AttachPicker.prototype.RemoteCopyProgram = function (launchConfig, multi=False) {
+    //Creates a temporary (optimally self deleting) copy of the remote executable. This way you don't have to
+    //While many dev systems build locally and send, my scenario is not that.
         var gdbCommand = 'gdb -q ';
         // Shhh, be vewy vewy quiet
         var pid;
@@ -109,7 +116,11 @@ var AttachPicker = (function () {
             return output.split('\n').slice(-3)[0];
         });
     }
-    AttachPicker.prototype.MakeGdbScript = function (launchConfig) {
+    AttachPicker.prototype.MakeGdbScriptMulti = function (launchConfig) {
+    //Create a gdb wrapper script to modify the behavior of gdb to make everything work today. Only expected to work on Linux
+    //1) It uses python to auto delete the local copy of program
+    //2) Adds additional miDebuggerGdbCommands to gdb. Useful for customization
+    //3) Uses sed change -target-select remote mi commands into -target-select exented-remote + -target-attach
         if (!("miDebuggerServerAddress" in launchConfig && "remoteProcessId" in launchConfig && "program" in launchConfig)){
             vscode.window.showErrorMessage('miDebuggerServerAddress or remoteProcessIdis or program not specified in launch.json');
             return;
@@ -125,29 +136,29 @@ var AttachPicker = (function () {
             gdbCommands = gdbCommands.concat(launchConfig.miDebuggerGdbCommands)
         }
 
-////        gdbCommands.push("attach "+launchConfig.remoteProcessId)
         gdbCommands = '-ex "'+gdbCommands.map((x) => {return x.replace('"', '\\"');}).join('" -ex "')+'"'
 
         var filename = path.resolve(vscode.extensions.all.find(o => o.id == "ms-vscode.cpptools").extensionPath,
                                     "gdb_" + launchConfig.miDebuggerServerAddress.replace(':','_'));
         fs.writeFileSync(filename, "#!/usr/bin/env bash\n"+
-                                    "tee /tmp/mi.in | "+
-//                                    "sed -r 's/^([0-9]*-file-exec-and-symbols ).*/\\1 "++"/'"
                                     "sed -ur -e 's/^([0-9]*-target-select) remote (.*)/\\1 extended-remote \\2\\n"+
                                                                                        "-target-attach "+launchConfig.remoteProcessId+"/' | " +
-///                                            "-e 's/-gdb-exit//' " +
-///                                            "-e 's/^([0-9]*)-exec-run//' |" +
-//                                            "-e 's/^([0-9]*)-exec-run/\\1-target-attach "+launchConfig.remoteProcessId+"/' |" +
-//                                    "grep --line-buffered -Ev '^[0-9]*-target-select|^[0-9]*-file-exec-and-symbols' | "+
                                     "gdb " + gdbCommands + " \"${@}\"" +
-                                    " | tee /tmp/mi.out\n");//+
-//                                    "rm $0\n");
+                                    "rm $0\n");
 
-//        fs.chmodSync(filename, '0755');
+        fs.chmodSync(filename, '0755');
 
         return filename;
     };
     AttachPicker.prototype.DockerGdb = function (launchConfig) {
+    //DOES NOT YET
+    //The idea is to run gdb in a docker. Since this is not remote, 
+    //1) I can't use the attach+miDebuggerServerAddress due to #265
+    //2) I can't use launch+miDebuggerServerAddress becuase "-target-select remote" will be used
+    //3) I can't use normal attach due to #265
+    //Idea another MITM sed for launch+miDebuggerServerAddress?
+
+ 
         if (!("miDockerName" in launchConfig)){
             vscode.window.showErrorMessage('miDockerName is not specified in launch.json');
             return;
@@ -155,7 +166,9 @@ var AttachPicker = (function () {
 
         var filename = path.resolve(vscode.extensions.all.find(o => o.id == "ms-vscode.cpptools").extensionPath, 
                                     "tmp_" + launchConfig.miDockerName);
-        fs.writeFileSync(filename, "#!/usr/bin/env bash\necho ${@} > /tmp/wtf\ndocker exec -it " + launchConfig.miDockerName + " gdb \"$1\"\nrm $0\n");
+        fs.writeFileSync(filename, "#!/usr/bin/env bash\n"+
+                                   "docker exec -it " + launchConfig.miDockerName + " gdb \"$1\"\n"+
+                                   "rm $0\n");
         fs.chmodSync(filename, '0755');
 
         return filename;

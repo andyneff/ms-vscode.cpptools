@@ -145,7 +145,7 @@
           "getRandomProcessName": "extension.getRandomProcessName",
           "gdbDocker": "extension.gdbDocker",
           "pickRemoteProcess": "extension.pickRemoteProcess",
-          "remoteGdb": "extension.makeGdbScript",
+          "remoteGdbMulti": "extension.makeGdbScriptMulti",
           "remoteCopyProgram": "extension.remoteCopyProgram",
           "remoteCopyProgramMulti": "extension.remoteCopyProgramMulti"
         },

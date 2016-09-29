@@ -13,13 +13,11 @@ function activate(context) {
     context.subscriptions.push(disposable);
     disposable = vscode.commands.registerCommand('extension.pickRemoteProcess', function (launchConfig) { return attacher.ShowRemoteAttachEntries(launchConfig); });
     context.subscriptions.push(disposable);
-    disposable = vscode.commands.registerCommand('extension.makeGdbScript', function (launchConfig) { return attacher.MakeGdbScript(launchConfig); });
+    disposable = vscode.commands.registerCommand('extension.makeGdbScriptMulti', function (launchConfig) { return attacher.MakeGdbScriptMulti(launchConfig); });
     context.subscriptions.push(disposable);
     disposable = vscode.commands.registerCommand('extension.pickDockerName', function (launchConfig) { return attacher.ShowDockerNameEntries(launchConfig); });
     context.subscriptions.push(disposable);
     disposable = vscode.commands.registerCommand('extension.getDockerProcessName', function (launchConfig) { return attachItemsProvider.getDockerProcessName(launchConfig); });
-    context.subscriptions.push(disposable);
-    disposable = vscode.commands.registerCommand('extension.getRandomProcessName', function (launchConfig) { return attachItemsProvider.getRandomProcessName(launchConfig); });
     context.subscriptions.push(disposable);
     disposable = vscode.commands.registerCommand('extension.remoteCopyProgram', function (launchConfig) { return attacher.RemoteCopyProgram(launchConfig, false); });
     context.subscriptions.push(disposable);

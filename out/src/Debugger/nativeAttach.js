@@ -26,6 +26,7 @@ var Process = (function () {
     return Process;
 }());
 var Docker = (function () {
+//Same class idea as Process to make AttachItems
     function Docker(id, name, image, labels) {
         this.name = name + "["+id+"]";
         this.id = id;
@@ -67,12 +68,14 @@ var NativeAttachItemsProvider = (function () {
         });
     };
     NativeAttachItemsProvider.prototype.getDockerItems = function () {
+    //Get list of running Dockers
         return this.getDockerEntries().then(function (processEntries) {
             var attachItems = processEntries.map(function (p) { return p.toAttachItem(); });
             return attachItems;
         });
     };
     NativeAttachItemsProvider.prototype.getDockerAttachItems = function (dockerName) {
+    //Get list of pids running in Docker dockerName
         return this.getDockerProcessEntries(dockerName).then(function (processEntries) {
             processEntries.sort(function (a, b) { return a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1; });
             var attachItems = processEntries.map(function (p) { return p.toAttachItem(); });
@@ -80,6 +83,7 @@ var NativeAttachItemsProvider = (function () {
         });
     };
     NativeAttachItemsProvider.prototype.getRemoteAttachItems = function (adddress) {
+    //get list of processes running on gdbserver, useful for --multi mode
         return this.getRemoteProcessEntries(adddress).then(function (processEntries) {
             processEntries.sort(function (a, b) { return a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1; });
             var attachItems = processEntries.map(function (p) { return p.toAttachItem(); });
@@ -107,6 +111,7 @@ var PsAttachItemsProvider = (function (_super) {
         });
     };
     PsAttachItemsProvider.prototype.getDockerEntries = function () {
+    //Gets the list of running dockers
         var _this = this;
         var psCommand = ("docker ps --format '{{.ID}}\t{{.Names}}\t{{.Image}}\t{{.Labels}}'");
         return common_1.execChildProcess(psCommand, null).then(function (dockers) {
@@ -114,6 +119,7 @@ var PsAttachItemsProvider = (function (_super) {
         });
     };
     PsAttachItemsProvider.prototype.getDockerProcessName = function (launchConfig) {
+    //SUPERHACK Gets the process name of a pid. This was to fool the initial #265 error  
         if (!("miDockerName" in launchConfig && "dockerProcessId" in launchConfig)){
             vscode.window.showErrorMessage('miDockerName or dockerProcessId is not specified in launch.json');
             return;
@@ -124,29 +130,8 @@ var PsAttachItemsProvider = (function (_super) {
             return processName.trim();
         });
     };
-    PsAttachItemsProvider.prototype.getRandomProcessName = function (launchConfig) {
-        var name = "r"+Math.random(1, 10)
-        name=name.replace('.', '')
-        var filename = path.resolve(vscode.extensions.all.find(o => o.id == "ms-vscode.cpptools").extensionPath, 
-                                    name);
-        var wrapper=filename+"wrap"
-
-        fs.writeFileSync(wrapper, "#!/usr/bin/env bash\n"+filename+" 10\nrm $0 "+filename+"\n");
-        
-        var fdr = fs.openSync('/bin/sleep', 'r')
-        var fdw = fs.openSync(filename, 'w')
-        fs.writeFileSync(fdw,fs.readFileSync(fdr))
-        fs.closeSync(fdr)
-        fs.closeSync(fdw)
-
-        fs.chmodSync(filename, '0755');
-        fs.chmodSync(wrapper, '0755');
-
-        common_1.execChildProcess(wrapper, null);
-        
-        return name
-    };
     PsAttachItemsProvider.prototype.parseDockersFromPs = function (processes) {
+    //Parses the output of "docker ps" and returns array of Docker objects
         var lines = processes.split(os.EOL);
         var dockerEntries = [];
         for (var i = 0; i < lines.length; i++) {
@@ -160,6 +145,7 @@ var PsAttachItemsProvider = (function (_super) {
         return dockerEntries;
     };
     PsAttachItemsProvider.prototype.parseDockerLineFromPs = function (line) {
+    //Parse a single line from "docker ps", and cleans it up
         var dockerEntry = line.split('\t');
         dockerEntry.push(dockerEntry.splice(3).join('\t'));
         //Combine all entries after 4. I'm not sure if labels can have tabs or not
@@ -167,19 +153,28 @@ var PsAttachItemsProvider = (function (_super) {
         return new Docker(dockerEntry[0], dockerEntry[1], dockerEntry[2], dockerEntry[3]);
     };
     PsAttachItemsProvider.prototype.getRemoteProcessEntries = function (address) {
+    //Gets lit of process running on gdbserver --multi
         var _this = this;
         var psCommand = "gdb -q -ex 'target extended-remote "+address+"' "
         psCommand += "-ex 'python import tempfile; tmp=tempfile.NamedTemporaryFile(); gdb.execute(\"set logging file \"+tmp.name)' "
+        //Create a temp file for logging so that the output of gdb commands go to temp file
         psCommand += "-ex 'set logging on' "
+        //turn on logging
         psCommand += "-ex 'info os processes' "
+        //Get list of processed
         psCommand += "-ex 'set logging off' "
+        //Turn off loggging
         psCommand += "-ex 'python pids = open(tmp.name, \"r\").readlines()[1:]; [print(\"%s %"+PsAttachItemsProvider.secondColumnCharacters+"s %s\" % tuple(pid.split(None, 2))) for pid in pids]' "
+        //Read in file, parse, and output it in an identical ps format 
+        psCommand += "-ex disconnect"
         psCommand += "-ex q"
         return common_1.execChildProcess(psCommand, null).then(function (processes) {
             return _this.parseProcessFromPs(processes.split("\nDone logging")[1]);
+            //Remove Done logging message and everything after it
         });
     };
     PsAttachItemsProvider.prototype.getDockerProcessEntries = function (dockerName) {
+    //Get list of processes running in docker, using idental format from cpptools
         var _this = this;
         PsAttachItemsProvider.secondColumnCharacters
 
