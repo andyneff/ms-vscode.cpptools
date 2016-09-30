@@ -140,12 +140,16 @@
           "pickProcess": "extension.pickNativeProcess",
           "pickLocalProcess": "extension.pickNativeProcess",
           "pickDockerProcess": "extension.pickDockerProcess",
-          "pickDockerName": "extension.pickDockerName",
-          "getDockerProcessName": "extension.getDockerProcessName",
-          "getRandomProcessName": "extension.getRandomProcessName",
-          "gdbDocker": "extension.gdbDocker",
           "pickRemoteProcess": "extension.pickRemoteProcess",
+
+          "pickDockerName": "extension.pickDockerName",
+          "getDockerProcessPath": "extension.getDockerProcessPath",
+          //Don't use getDockerProcessPath
+
+          "remoteGdb": "extension.makeGdbScript",
           "remoteGdbMulti": "extension.makeGdbScriptMulti",
+          "dockerGdb": "extension.gdbDocker",
+
           "remoteCopyProgram": "extension.remoteCopyProgram",
           "remoteCopyProgramMulti": "extension.remoteCopyProgramMulti"
         },

@@ -44,6 +44,8 @@ var AttachPicker = (function () {
             return;
         }
 
+        if (launchConfig.miDockerName === "null"){return;}
+
         return this.attachItemsProvider.getDockerAttachItems(launchConfig.miDockerName)
             .then(function (processEntries) {
             var attachPickOptions = {
@@ -57,6 +59,19 @@ var AttachPicker = (function () {
             });
         });
     };
+    AttachPicker.prototype.GetDockerProcessPath = function (launchConfig) {
+    //Returns the program path name based on pid.
+    //While this is correct in the docker, cpptools is confused because it has a sanity check and says
+    //"Hey, this doesn't exist outside the docker?!" Which is technically correct but not important
+    //So it's best not to use the getDockerProcessPath command, and instead create a dummy file in the same 
+    //path on your host and docker
+        if (!("dockerProcessId" in launchConfig)){
+            vscode.window.showErrorMessage('dockerProcessId is not specified in launch.json');
+            return;
+        }
+
+        return "/proc/"+launchConfig.dockerProcessId+"/exe";
+    }
     AttachPicker.prototype.ShowRemoteAttachEntries = function (launchConfig) {
     //Using gdb, query the remote processes. This uses "info os processes", which ironically doesn't work on my Mint 18
     //For some reason. It was complaining about an invalid charecter. But I can't reproduce that error, and even then
@@ -122,6 +137,41 @@ var AttachPicker = (function () {
             return tempFileName;
         });
     }
+    AttachPicker.prototype.MakeGdbScript = function (launchConfig) {
+    //Create a gdb wrapper script to modify the behavior of gdb
+    //1) Adds additional miDebuggerGdbCommands to gdb. Useful for customization
+
+        var gdbCommands = []
+        if ("miDebuggerGdbCommands" in launchConfig){
+            gdbCommands = gdbCommands.concat(launchConfig.miDebuggerGdbCommands)
+        }
+
+        if (!(global.remoteCopy === undefined)){
+            var index = global.remoteCopy.indexOf(launchConfig.program);
+            if (index >= 0){
+                gdbCommands.push("python import os,tempfile;" +
+                                 "file=tempfile._TemporaryFileWrapper(open(os.devnull, 'r'), '"+launchConfig.program+"', True)")
+                //This is part of auto cleanup. It sideloads a temporary file, so that when gdb exists, python atexit deletes the file(s)
+                global.remoteCopy.splice(index, 1);
+            }
+        }
+
+
+        if (gdbCommands.length > 0){
+            gdbCommands = '-ex "'+gdbCommands.map((x) => {return x.replace('"', '\\"');}).join('" -ex "')+'"';
+        }else{
+            gdbCommands = '';
+        }
+
+        var filename = path.resolve(vscode.extensions.all.find(o => o.id == "ms-vscode.cpptools").extensionPath,
+                                    "gdb_" + launchConfig.miDebuggerServerAddress.replace(':','_'));
+        fs.writeFileSync(filename, "#!/usr/bin/env bash\n"+
+                                    "gdb " + gdbCommands + " \"${@}\"\n" +
+                                    "rm $0\n");
+        fs.chmodSync(filename, '0755');
+
+        return filename;
+    };
     AttachPicker.prototype.MakeGdbScriptMulti = function (launchConfig) {
     //Create a gdb wrapper script to modify the behavior of gdb to make everything work today. Only expected to work on Linux
     //1) It uses python to auto delete the local copy of program
@@ -152,7 +202,6 @@ var AttachPicker = (function () {
         var filename = path.resolve(vscode.extensions.all.find(o => o.id == "ms-vscode.cpptools").extensionPath,
                                     "gdb_" + launchConfig.miDebuggerServerAddress.replace(':','_'));
         fs.writeFileSync(filename, "#!/usr/bin/env bash\n"+
-                                    "tee /tmp/mi | " + 
                                     "sed -ur -e 's/^([0-9]*-target-select) remote (.*)/\\1 extended-remote \\2\\n"+
                                                                                        "-target-attach "+launchConfig.remoteProcessId+"/' | " +
                                     "gdb " + gdbCommands + " \"${@}\"\n" +
@@ -163,24 +212,32 @@ var AttachPicker = (function () {
         return filename;
     };
     AttachPicker.prototype.DockerGdb = function (launchConfig) {
-    //DOES NOT YET
-    //The idea is to run gdb in a docker. Since this is not remote, 
-    //1) I can't use the attach+miDebuggerServerAddress due to #265
-    //2) I can't use launch+miDebuggerServerAddress becuase "-target-select remote" will be used
-    //3) I can't use normal attach due to #265
-    //Idea another MITM sed for launch+miDebuggerServerAddress?
+    //The idea is to run gdb in a docker. Even though it's not remote, I trick cpptools into working
+    //Right now you have to have the source code in the same location as in the docker when it was compiled
+    //Not sure who's to blame for that. directory commands didn't seem to help 
 
- 
-        if (!("miDockerName" in launchConfig)){
-            vscode.window.showErrorMessage('miDockerName is not specified in launch.json');
+        if (!("miDockerName" in launchConfig && "dockerProcessId" in launchConfig)){
+            vscode.window.showErrorMessage('miDockerName or dockerProcessId is not specified in launch.json');
             return;
         }
 
+        var gdbCommands = []
+        if ("miDebuggerGdbCommands" in launchConfig){
+            gdbCommands = gdbCommands.concat(launchConfig.miDebuggerGdbCommands)
+        }
+
+        if (gdbCommands.length > 0){
+            gdbCommands = '-ex "'+gdbCommands.map((x) => {return x.replace('"', '\\"');}).join('" -ex "')+'"';
+        }else{
+            gdbCommands = '';
+        }
+
         var filename = path.resolve(vscode.extensions.all.find(o => o.id == "ms-vscode.cpptools").extensionPath, 
-                                    "tmp_" + launchConfig.miDockerName);
+                                    "gdb_" + launchConfig.miDockerName);
         fs.writeFileSync(filename, "#!/usr/bin/env bash\n"+
-                                   "docker exec -it " + launchConfig.miDockerName + " gdb \"$1\"\n"+
-                                   "rm $0\n");
+                                    "sed -ur -e 's/^([0-9]*)-target-select remote .*/\\1-target-attach "+launchConfig.dockerProcessId+"/' | " +
+                                    "docker exec -i " + launchConfig.miDockerName + " gdb "+gdbCommands+" \"$1\"\n" +
+                                    "rm $0\n");
         fs.chmodSync(filename, '0755');
 
         return filename;

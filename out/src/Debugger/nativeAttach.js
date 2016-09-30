@@ -118,18 +118,6 @@ var PsAttachItemsProvider = (function (_super) {
             return _this.parseDockersFromPs(dockers);
         });
     };
-    PsAttachItemsProvider.prototype.getDockerProcessName = function (launchConfig) {
-    //SUPERHACK Gets the process name of a pid. This was to fool the initial #265 error  
-        if (!("miDockerName" in launchConfig && "dockerProcessId" in launchConfig)){
-            vscode.window.showErrorMessage('miDockerName or dockerProcessId is not specified in launch.json');
-            return;
-        }
-
-        var psCommand = ("docker exec "+launchConfig.miDockerName+" ps -o comm= "+launchConfig.dockerProcessId);
-        return common_1.execChildProcess(psCommand, null).then(function (processName) {
-            return processName.trim();
-        });
-    };
     PsAttachItemsProvider.prototype.parseDockersFromPs = function (processes) {
     //Parses the output of "docker ps" and returns array of Docker objects
         var lines = processes.split(os.EOL);
