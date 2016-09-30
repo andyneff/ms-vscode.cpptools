@@ -152,7 +152,7 @@ var PsAttachItemsProvider = (function (_super) {
         //Get list of processed
         psCommand += "-ex 'set logging off' "
         //Turn off loggging
-        psCommand += "-ex 'python pids = open(tmp.name, \"r\").readlines()[1:]; [print(\"%s %"+PsAttachItemsProvider.secondColumnCharacters+"s %s\" % tuple(pid.split(None, 2))) for pid in pids]' "
+        psCommand += "-ex 'python pids = open(tmp.name, \"r\").readlines()[1:]; import sys; [sys.stdout.write(\"%s %"+PsAttachItemsProvider.secondColumnCharacters+"s %s\\n\" % tuple(pid.split(None, 2))) for pid in pids]' "
         //Read in file, parse, and output it in an identical ps format 
         psCommand += "-ex disconnect "
         psCommand += "-ex q"
