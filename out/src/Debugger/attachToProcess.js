@@ -1,6 +1,7 @@
 "use strict";
 var vscode = require('vscode');
 var fs = require('fs');
+var os = require('os');
 var path = require('path');
 var common_1 = require('../common');
 
@@ -221,24 +222,33 @@ var AttachPicker = (function () {
             return;
         }
 
-        var gdbCommands = []
-        if ("miDebuggerGdbCommands" in launchConfig){
-            gdbCommands = gdbCommands.concat(launchConfig.miDebuggerGdbCommands)
-        }
+        // var gdbCommands = []
+        // if ("miDebuggerGdbCommands" in launchConfig){
+        //     gdbCommands = gdbCommands.concat(launchConfig.miDebuggerGdbCommands)
+        // }
 
-        if (gdbCommands.length > 0){
-            gdbCommands = '-ex "'+gdbCommands.map((x) => {return x.replace('"', '\\"');}).join('" -ex "')+'"';
-        }else{
-            gdbCommands = '';
-        }
+        // if (gdbCommands.length > 0){
+        //     gdbCommands = '-ex "'+gdbCommands.map((x) => {return x.replace('"', '\\"');}).join('" -ex "')+'"';
+        // }else{
+        //     gdbCommands = '';
+        // }
 
         var filename = path.resolve(vscode.extensions.all.find(o => o.id == "ms-vscode.cpptools").extensionPath, 
                                     "gdb_" + launchConfig.miDockerName);
-        fs.writeFileSync(filename, "#!/usr/bin/env bash\n"+
-                                    "sed -ur -e 's/^([0-9]*)-target-select remote .*/\\1-target-attach "+launchConfig.dockerProcessId+"/' | " +
-                                    "docker exec -i " + launchConfig.miDockerName + " gdb "+gdbCommands+" \"$1\"\n" +
-                                    "rm $0\n");
-        fs.chmodSync(filename, '0755');
+        if (os.platform() == 'win32'){
+            filename = filename + '_'+launchConfig.dockerProcessId+'.bat';
+            fs.writeFileSync(filename, "@echo off\n"+
+                                       "docker exec -i "+launchConfig.miDockerName+" /opt/vip/gdb_docker "+launchConfig.dockerProcessId+" %*\n"+
+                                       "call :deleteSelf&exit /b\n"+
+                                       ":deleteSelf\n"+
+                                       'start /b "" cmd /c del "%~f0"&exit /b\n');
+        }else{
+            fs.writeFileSync(filename, "#!/usr/bin/env bash\n"+
+                                        "sed -ur -e 's/^([0-9]*)-target-select remote .*/\\1-target-attach "+launchConfig.dockerProcessId+"/' | " +
+                                        "docker exec -i " + launchConfig.miDockerName + " gdb "+gdbCommands+" \"$1\"\n" +
+                                        "rm $0\n");
+            fs.chmodSync(filename, '0755');
+        }
 
         return filename;
     };

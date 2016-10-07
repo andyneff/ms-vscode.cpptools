@@ -47,12 +47,7 @@ var NativeAttachItemsProviderFactory = (function () {
     function NativeAttachItemsProviderFactory() {
     }
     NativeAttachItemsProviderFactory.Get = function () {
-        if (os.platform() === 'win32') {
-            return new WmicAttachItemsProvider();
-        }
-        else {
-            return new PsAttachItemsProvider();
-        }
+        return new PsAttachItemsProvider();
     };
     return NativeAttachItemsProviderFactory;
 }());
@@ -113,14 +108,14 @@ var PsAttachItemsProvider = (function (_super) {
     PsAttachItemsProvider.prototype.getDockerEntries = function () {
     //Gets the list of running dockers
         var _this = this;
-        var psCommand = ("docker ps --format '{{.ID}}\t{{.Names}}\t{{.Image}}\t{{.Labels}}'");
+        var psCommand = "docker ps --format {{.ID}}@{{.Names}}@{{.Image}}@{{.Labels}}";
         return common_1.execChildProcess(psCommand, null).then(function (dockers) {
             return _this.parseDockersFromPs(dockers);
         });
     };
     PsAttachItemsProvider.prototype.parseDockersFromPs = function (processes) {
     //Parses the output of "docker ps" and returns array of Docker objects
-        var lines = processes.split(os.EOL);
+        var lines = processes.split('\n');
         var dockerEntries = [];
         for (var i = 0; i < lines.length; i++) {
             var line = lines[i];
@@ -134,9 +129,9 @@ var PsAttachItemsProvider = (function (_super) {
     };
     PsAttachItemsProvider.prototype.parseDockerLineFromPs = function (line) {
     //Parse a single line from "docker ps", and cleans it up
-        var dockerEntry = line.split('\t');
-        dockerEntry.push(dockerEntry.splice(3).join('\t'));
-        //Combine all entries after 4. I'm not sure if labels can have tabs or not
+        var dockerEntry = line.split('@');
+        dockerEntry.push(dockerEntry.splice(3).join('@'));
+        //Combine all entries after 4 in case labels can have @
         dockerEntry = dockerEntry.map(function(v){return v.trim();});
         return new Docker(dockerEntry[0], dockerEntry[1], dockerEntry[2], dockerEntry[3]);
     };
@@ -173,7 +168,7 @@ var PsAttachItemsProvider = (function (_super) {
         });
     };
     PsAttachItemsProvider.prototype.parseProcessFromPs = function (processes) {
-        var lines = processes.split(os.EOL);
+        var lines = processes.split('\n');
         var processEntries = [];
         for (var i = 1; i < lines.length; i++) {
             var line = lines[i];
